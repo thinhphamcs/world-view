@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss xmlns:npr="https://www.npr.org/rss/" xmlns:nprml="https://api.npr.org/nprml" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:media="http://search.yahoo.com/mrss/" version="2.0">
+  <channel>
+    <title>NPR Topics: Politics</title>
+    <link>https://www.npr.org/templates/story/story.php?storyId=1014</link>
+    <description>NPR&apos;s expanded coverage of U.S. and world politics, the latest news from Congress and the White House and elections.</description>
+    <language>en</language>
+    <copyright>Copyright 2024 NPR - For Personal Use Only</copyright>
+    <generator>Story API Shim 1.2.24</generator>
+    <lastBuildDate>Tue, 04 Aug 2026 14:00:51 -0400</lastBuildDate>
+    <image>
+      <url>https://media.npr.org/images/podcasts/primary/npr_generic_image_300.jpg?s=200</url>
+      <title>NPR Topics: Politics</title>
+      <link>https://www.npr.org/sections/politics/</link>
+    </image>
+    <item>
+      <title>Senate Democrats say banks turned blind eye to suspicious moves by Jeffrey Epstein</title>
+      <description>A report from Senate Democrats accuses big banks of failing to report suspicious money transfers made by Jeffrey Epstein until after his arrest in 2019.  </description>
+      <pubDate>Tue, 04 Aug 2026 13:43:06 -0400</pubDate>
+      <link>https://www.npr.org/2026/08/04/nx-s1-5919238/jeffrey-epstein-jpmorgan-bank-of-america-deutsche-bank-senate-democrats</link>
+      <guid>https://www.npr.org/2026/08/04/nx-s1-5919238/jeffrey-epstein-jpmorgan-bank-of-america-deutsche-bank-senate-democrats</guid>
+      <content:encoded><![CDATA[<img src='https://npr.brightspotcdn.com/dims3/default/strip/false/crop/8256x5504+0+0/resize/8256x5504!/?url=http%3A%2F%2Fnpr-brightspot.s3.amazonaws.com%2Fad%2F90%2F63f834f841bfac537901a62294bb%2Fgettyimages-2260272847.jpg' alt='A report from Senate Democrats says big banks had concerns for years about suspicious money transfers made by Jeffrey Epstein. But in most cases those worries went unreported until Epstein was charged with sex-trafficking.'/><p>A report from Senate Democrats accuses big banks of failing to report suspicious money transfers made by Jeffrey Epstein until after his arrest in 2019.  </p><p>(Image credit: Martin Bureau)</p><img src='https://media.npr.org/include/images/tracking/npr-rss-pixel.png?story=nx-s1-5919238' />]]></content:encoded>
+      <dc:creator>Scott Horsley</dc:creator>
+    </item>
+    <item>
+      <title>5 states hold primaries today. And, Spokane police arrest man connected to wildfire</title>
+      <description>Five state primaries are being held today, and Michigan is a key focus for Democrats who want to see how progressives fare in races. And, a man has been arrested in connection with a Spokane fire.</description>
+      <pubDate>Tue, 04 Aug 2026 07:29:23 -0400</pubDate>
+      <link>https://www.npr.org/2026/08/04/g-s1-137277/up-first-newsetter-michigan-primaries-todd-blanche-spokane-wildfires-chuck-edwards</link>
+      <guid>https://www.npr.org/2026/08/04/g-s1-137277/up-first-newsetter-michigan-primaries-todd-blanche-spokane-wildfires-chuck-edwards</guid>
+      <content:encoded><![CDATA[<img src='undefined' alt='Democratic candidate for U.S. Senate in Michigan Abdul El-Sayed speaks to supporters and media in front of the Spirit of Detroit statue following a march through downtown on Aug. 2, 2026, in Detroit, Michigan.'/><p>Five state primaries are being held today, and Michigan is a key focus for Democrats who want to see how progressives fare in races. And, a man has been arrested in connection with a Spokane fire.</p><p>(Image credit: Scott Olson)</p><img src='https://media.npr.org/include/images/tracking/npr-rss-pixel.png?story=g-s1-137277' />]]></content:encoded>
+      <dc:creator>Brittney Melton</dc:creator>
+    </item>
+  </channel>
+</rss>

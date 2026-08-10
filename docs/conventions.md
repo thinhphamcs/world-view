@@ -1,0 +1,3 @@
+## Test Naming Convention
+Format: methodName_condition_expectedResult
+Example: parseFeed_validXml_returnsAllEntries
