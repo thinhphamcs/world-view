@@ -25,7 +25,7 @@ public class RssFeedService {
         URL url = new URL(nprFeedProperties.getUrl());
         return url.openStream();
     }
-     SyndFeed parseFeed(InputStream inputStream) throws IOException, FeedException {
+    SyndFeed parseFeed(InputStream inputStream) throws IOException, FeedException {
         try (XmlReader xmlReader = new XmlReader(inputStream)) {
             SyndFeedInput input = new SyndFeedInput();
             return input.build(xmlReader);
