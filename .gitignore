@@ -30,4 +30,4 @@ replay_pid*
 .vscode/
 
 # Claude session notes (personal)
-CLAUDE.local.md
+docs/CLAUDE.local.md

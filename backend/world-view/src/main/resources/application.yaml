@@ -6,6 +6,18 @@ spring:
     username: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
     driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: world-view-consumer-group
+      auto-offset-reset: earliest
+      value-deserializer: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
+      properties:
+        spring.json.value.default.type: net.thinhpham.world_view.dto.RssEntryDto
+        spring.json.trusted.packages: net.thinhpham.world_view.dto
 
 npr:
   feed:
