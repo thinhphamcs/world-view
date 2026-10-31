@@ -18,6 +18,8 @@ spring:
       properties:
         spring.json.value.default.type: net.thinhpham.world_view.dto.RssEntryDto
         spring.json.trusted.packages: net.thinhpham.world_view.dto
+    producer:
+      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
 
 npr:
   feed:

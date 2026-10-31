@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
+import net.thinhpham.world_view.constant.KafkaTopics;
 import net.thinhpham.world_view.dto.RssEntryDto;
 import net.thinhpham.world_view.repository.RssEntryRepository;
 import net.thinhpham.world_view.entity.RssEntry;
@@ -18,7 +19,7 @@ public class RssEntryConsumer {
         this.rssEntryRepository = rssEntryRepository;
     }
 
-    @KafkaListener(topics = "rss-entries")
+    @KafkaListener(topics = KafkaTopics.RSS_ENTRIES)
     public void consume(RssEntryDto rssEntryDto) {
         if (rssEntryRepository.existsByLink(rssEntryDto.link())) {
             logger.info("Entry with link {} already exists.", rssEntryDto.link());
