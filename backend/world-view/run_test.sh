@@ -2,4 +2,4 @@
 set -a
 source ../../.env
 set +a
-mvn test
+./mvnw test
