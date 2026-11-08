@@ -23,7 +23,7 @@ public class RssEntryProducerTest {
     @Test 
     public void send_validDto_sendsToTopicWithLinkAsKey() {
         // Arrange
-        RssEntryDto dto = new RssEntryDto("http://www.test.com", Instant.now(), "NPR");
+        RssEntryDto dto = new RssEntryDto("http://www.test.com", "TEST_1", "This is first test", Instant.now(), "NPR");
         // Act
         rssEntryProducer.send(dto);
         // Assert
