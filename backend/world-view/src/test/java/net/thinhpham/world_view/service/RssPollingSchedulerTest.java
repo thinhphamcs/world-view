@@ -8,7 +8,9 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
@@ -36,7 +38,7 @@ public class RssPollingSchedulerTest {
         // Arrange
         SyndEntry entry = Mockito.mock(SyndEntry.class);
         List<SyndEntry> entries = List.of(entry);
-        RssEntryDto dto = new RssEntryDto("http://www.test.com", Instant.now(), "NPR");
+        RssEntryDto dto = new RssEntryDto("http://www.test.com", "TEST_1", "This is first test", Instant.now(), "NPR");
         Mockito.when(rssFeedService.fetchLatestEntries()).thenReturn(entries);
         Mockito.when(rssEntryMapper.toDto(entry)).thenReturn(dto);
         // Act
@@ -59,8 +61,8 @@ public class RssPollingSchedulerTest {
         SyndEntry entryFail = Mockito.mock(SyndEntry.class);
         SyndEntry entrySuccess = Mockito.mock(SyndEntry.class);
         List<SyndEntry> entries = List.of(entryFail, entrySuccess);
-        RssEntryDto dtoFail = new RssEntryDto("http://www.fail.com", Instant.now(), "NPR");
-        RssEntryDto dtoSuccess = new RssEntryDto("http://www.success.com", Instant.now(), "NPR");
+        RssEntryDto dtoFail = new RssEntryDto("http://www.fail.com", "TEST_FAILED", "This is failed test", Instant.now(), "NPR");
+        RssEntryDto dtoSuccess = new RssEntryDto("http://www.success.com", "TEST_PASSED", "This is passed test", Instant.now(), "NPR");
         Mockito.when(rssFeedService.fetchLatestEntries()).thenReturn(entries);
         Mockito.when(rssEntryMapper.toDto(entryFail)).thenReturn(dtoFail);
         Mockito.when(rssEntryMapper.toDto(entrySuccess)).thenReturn(dtoSuccess);
@@ -69,5 +71,51 @@ public class RssPollingSchedulerTest {
         rssPollingScheduler.checkForNewEntries();
         // Assert
         verify(rssEntryProducer).send(dtoSuccess);
+    }
+
+    @Test
+    public void checkForNewEntries_missingTitle_skipsEntry() throws IOException, FeedException {
+        // Arrange
+        SyndEntry entry = Mockito.mock(SyndEntry.class);
+        List<SyndEntry> entries = List.of(entry);
+        RssEntryDto dto = new RssEntryDto("http://www.test.com", null, "This is missing title", Instant.now(), "NPR");
+        Mockito.when(rssFeedService.fetchLatestEntries()).thenReturn(entries);
+        Mockito.when(rssEntryMapper.toDto(entry)).thenReturn(dto);
+        // Act
+        rssPollingScheduler.checkForNewEntries();
+        // Assert
+        verify(rssEntryProducer, never()).send(any());
+    }
+
+    @Test
+    public void checkForNewEntries_blankSummary_skipsEntry() throws IOException, FeedException {
+        // Arrange
+        SyndEntry entry = Mockito.mock(SyndEntry.class);
+        List<SyndEntry> entries = List.of(entry);
+        RssEntryDto dto = new RssEntryDto("http://www.test.com", "TEST_BLANK_SUMMARY", " ", Instant.now(), "NPR");
+        Mockito.when(rssFeedService.fetchLatestEntries()).thenReturn(entries);
+        Mockito.when(rssEntryMapper.toDto(entry)).thenReturn(dto);
+        // Act
+        rssPollingScheduler.checkForNewEntries();
+        // Assert
+        verify(rssEntryProducer, never()).send(any());
+    }
+
+    @Test
+    public void checkForNewEntries_oneIncompleteEntry_sendsRemainingEntries() throws IOException, FeedException {
+        // Arrange 
+        SyndEntry entryIncomplete = Mockito.mock(SyndEntry.class);
+        SyndEntry entrySuccess = Mockito.mock(SyndEntry.class);
+        List<SyndEntry> entries = List.of(entryIncomplete, entrySuccess);
+        RssEntryDto dtoIncomplete = new RssEntryDto("http://www.fail.com", "MISSING_SUMMARY", null, Instant.now(), "NPR");
+        RssEntryDto dtoSuccess = new RssEntryDto("http://www.success.com", "TEST_PASSED", "This is passed test", Instant.now(), "NPR");
+        Mockito.when(rssFeedService.fetchLatestEntries()).thenReturn(entries);
+        Mockito.when(rssEntryMapper.toDto(entryIncomplete)).thenReturn(dtoIncomplete);
+        Mockito.when(rssEntryMapper.toDto(entrySuccess)).thenReturn(dtoSuccess);
+        // Act
+        rssPollingScheduler.checkForNewEntries();
+        // Assert
+        verify(rssEntryProducer).send(dtoSuccess);
+        verify(rssEntryProducer,never()).send(dtoIncomplete);
     }
 }

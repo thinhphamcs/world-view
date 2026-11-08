@@ -21,17 +21,24 @@ public class RssEntryConsumer {
 
     @KafkaListener(topics = KafkaTopics.RSS_ENTRIES)
     public void consume(RssEntryDto rssEntryDto) {
-        if (rssEntryRepository.existsByLink(rssEntryDto.link())) {
-            logger.info("Entry with link {} already exists.", rssEntryDto.link());
-        } else {
-            // Process the new RSS entry
-            RssEntry rssEntry = new RssEntry(
-                rssEntryDto.link(),
-                rssEntryDto.publishedAt(),
-                rssEntryDto.sourceName()
-            );
-            logger.info("Processing new entry with link {}.", rssEntryDto.link());
-            rssEntryRepository.save(rssEntry);
+        if(!rssEntryDto.isComplete()) {
+            logger.warn("Entry {} is incomplete: missing title or summary", rssEntryDto.link());
+        }
+        else {
+            if (rssEntryRepository.existsByLink(rssEntryDto.link())) {
+                logger.info("Entry with link {} already exists.", rssEntryDto.link());
+            } else {
+                // Process the new RSS entry
+                RssEntry rssEntry = new RssEntry(
+                    rssEntryDto.link(),
+                    rssEntryDto.title(),
+                    rssEntryDto.summary(),
+                    rssEntryDto.publishedAt(),
+                    rssEntryDto.sourceName()
+                );
+                logger.info("Processing new entry with link {}.", rssEntryDto.link());
+                rssEntryRepository.save(rssEntry);
+            }
         }
     }
 }

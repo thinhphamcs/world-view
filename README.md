@@ -10,6 +10,7 @@ An ad-free, paywall-free news dashboard. RSS news, weather alerts, and trending 
 |------------|----------------------------------------------------------|
 | Backend    | Spring Boot 4.1, Java 17, Maven                          |
 | RSS parse  | Rome 2.1.0                                               |
+| HTML→text  | jsoup 1.23.2                                             |
 | Messaging  | Apache Kafka 4.3.1 (KRaft mode, single node, no ZooKeeper) |
 | Database   | PostgreSQL 16 via Spring Data JPA / Hibernate            |
 | Frontend   | Angular 21 (SCSS, no SSR), Vitest for tests              |
@@ -25,7 +26,7 @@ An ad-free, paywall-free news dashboard. RSS news, weather alerts, and trending 
       │
       ▼
  RssEntryMapper: SyndEntry → RssEntryDto                          ✅ done
-      │
+      │  (description HTML → plain text; incomplete entries skipped)
       ▼
  RssEntryProducer → Kafka topic "rss-entries" (key = link)        ✅ done
       │
@@ -156,7 +157,16 @@ Rough order. Each item maps to one feature branch.
 1. ✅ **`feature/kafka-consumer`**: listen on `rss-entries`, save new entries to Postgres, skip duplicate links.
 2. ✅ **`feature/kafka-producer`**: `RssEntryMapper` maps `SyndEntry` → `RssEntryDto` (date falls back from published → updated → fetch time, with a warning log). `RssEntryProducer` sends it to `rss-entries` with the link as key. JSON serializer configured, topic name in `KafkaTopics`.
 3. ✅ **End-to-end check**: rows land in `rss_entry`. Required setting the Kafka internal-topic replication factor to 1, because the default of 3 can't be met by a single broker and consumer groups fail with `FIND_COORDINATOR` timeouts. Still to observe: `already exists` logs on a repeat poll.
-4. **Expand the entity**: title, description/summary, maybe an image URL. The current DTO has no title, which the dashboard will need.
+4. ✅ **`feature/expand-entity`**: `title` and `summary` added to `RssEntryDto`, `RssEntry` and the `rss_entry` table (both `TEXT NOT NULL`; `TEXT` costs no more than `VARCHAR` in Postgres and can't overflow). The mapper strips HTML from the description with jsoup (tags removed, entities like `&amp;` decoded) so clients, including text-to-speech, get plain text. **Title and summary are both required**: `RssEntryDto.isComplete()` (null or blank = missing) is checked in the scheduler (skip + warning, before Kafka) and again in the consumer (protects against old or foreign messages). `isComplete()` is `@JsonIgnore`d so it doesn't leak into the JSON. Dev data was wiped (`DROP TABLE`) instead of making the columns nullable. **No images**: feed photos are often licensed from agencies (AP, Getty), and linking to them directly is a legal gray area, so the dashboard stays text-first (headline, summary, source, time, link back to the original).
+   - **Then, small chore: test profile for `WorldViewApplicationTests`**. The `@SpringBootTest` currently starts the real app: it connects to the dev Postgres, `ddl-auto: update` can change the schema, and the scheduler fires immediately (confirmed: a test run polled NPR and sent 10 real messages to Kafka). Add a test profile that disables scheduling and keeps the context test free of side effects.
+   - **Then, small chore: JaCoCo coverage report** (`jacoco-maven-plugin`, HTML report in `target/site/jacoco/index.html`). Used to find untested code (red lines), not as a target number: coverage shows which lines ran, not whether they were checked properly.
 5. **REST API**: e.g. `GET /api/entries?page=…`, newest first.
 6. **Frontend**: news list page in Angular, calling the API.
 7. **More sources**: more RSS feeds (make `NprFeedProperties` a list of feeds), then weather alerts, trending topics, and the audio/radio player.
+8. **Later: voice assistant client**: a home-assistant style client that reads news briefings aloud. This is why the API should be client-agnostic and why summaries are stored as plain text (HTML stripped server-side), so text-to-speech never reads markup.
+9. **Before deploying: cost review**: make a cost chart and decide where and how to host. **Budget: about $20–30 per year for production.** Kafka only needs to run locally for learning; production just has to serve news to the dashboard and the voice assistant. Current favorite: **Hybrid** (below). Kafka adds about 1–2 GB of RAM (app total ~1 GB without it, ~2–4 GB with it): at home that's nearly free (a few watts), in the cloud it multiplies the cost roughly 3–10× (e.g. EC2 t3.small/medium ~$180–360/year). **Deciding question: is there a home machine with 4–8 GB RAM?** Yes → keep Kafka in production at home. No → Hybrid. Storage is cheap (about 1–2 KB per story); the real cost is an always-on server with enough RAM for Kafka, Postgres and Spring Boot. Options to compare:
+   - **Home server with Kafka** (old laptop, mini PC, Raspberry Pi): electricity only, and it sits next to the voice assistant.
+   - **Cheap VPS with Kafka** (~4 GB RAM): same Docker Compose setup.
+   - **Production without Kafka**: the scheduler saves straight to Postgres. Kafka stays for local learning; make it switchable with Spring profiles (e.g. `kafka` vs `direct`), since only `RssEntryProducer` and `RssEntryConsumer` know about Kafka. Mechanism: a property like `world-view.messaging: kafka | direct` plus `@ConditionalOnProperty` on the beans. Deliberately **not** built yet, only if the cost review calls for it.
+   - **Hybrid**: production runs `direct` on the smallest server; Kafka runs only locally in Docker (`kafka` flag) for learning. Same code, flag decides the path. Keep the databases separate, and test both paths, since production never exercises the Kafka one.
+   - Possible add-on: a retention rule (delete stories older than N days) to cap storage.
