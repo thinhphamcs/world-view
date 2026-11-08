@@ -33,6 +33,20 @@ public class RssEntry {
         unique = true
     )
     private String link;
+
+    @Column(
+        name = "title",
+        columnDefinition = "TEXT",
+        nullable = false
+    )
+    private String title;
+
+    @Column (
+        name = "summary",
+        columnDefinition = "TEXT",
+        nullable = false
+    )
+    private String summary;
     
     @Column(
         name = "published_at", 
@@ -47,12 +61,38 @@ public class RssEntry {
     )
     private String sourceName;
 
-    public RssEntry(String link, Instant publishedAt, String sourceName) {
+    public RssEntry(String link, String title, String summary, Instant publishedAt, String sourceName) {
         this.link = link;
+        this.title = title;
+        this.summary = summary;
         this.publishedAt = publishedAt;
         this.sourceName = sourceName;
     }
 
     public RssEntry() {
+    }
+
+    public Long getId() {
+        return this.id;
+    }
+
+    public String getLink() {
+        return this.link;
+    }
+
+    public String getTitle() {
+        return this.title;
+    }
+
+    public String getSummary() {
+        return this.summary;
+    }
+
+    public Instant getPublishedAt() {
+        return this.publishedAt;
+    }
+
+    public String getSourceName() {
+        return this.sourceName;
     }
 }
