@@ -24,6 +24,7 @@ Uncommitted changes don't belong to any branch yet: they move with you on `git s
 git fetch --prune                   # download new commits; --prune drops origin/* copies of branches deleted on GitHub
 git status                          # "behind 'origin/dev' by N commits"
 git log --oneline dev..origin/dev   # which commits are new ("on origin/dev but not on my dev")
+git diff --stat dev..origin/dev     # which files they change, and how many lines
 ```
 
 What `git status` tells you after a fetch:
