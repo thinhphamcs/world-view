@@ -21,10 +21,37 @@ Uncommitted changes don't belong to any branch yet: they move with you on `git s
 - `git pull` = `git fetch` + merge into the **current** branch. On a feature branch, `git pull` pulls that branch's remote, **not** `dev`.
 
 ```bash
-git fetch
+git fetch --prune                   # download new commits; --prune drops origin/* copies of branches deleted on GitHub
 git status                          # "behind 'origin/dev' by N commits"
-git log --oneline dev..origin/dev   # which commits are new
+git log --oneline dev..origin/dev   # which commits are new ("on origin/dev but not on my dev")
 ```
+
+What `git status` tells you after a fetch:
+
+| Message | Meaning | Do |
+|---|---|---|
+| `behind 'origin/dev' by N commits, and can be fast-forwarded` | GitHub has N commits you don't; you have none of your own | `git pull` is safe, no conflicts possible |
+| `ahead of 'origin/dev' by N commits` | you have N commits not pushed yet | `git push` |
+| `have diverged` | both sides have commits the other doesn't | stop and look (`git log`) before pulling |
+| `up to date` | nothing to do | |
+
+### After a PR is merged on GitHub
+
+The merge happened on GitHub, so your local `dev` doesn't have it yet.
+
+```bash
+git fetch --prune
+git switch dev
+git status                          # expect "behind ... can be fast-forwarded"
+git log --oneline dev..origin/dev   # your commits + "Merge pull request #N"
+git pull
+git branch -d feature/my-thing      # delete the local branch
+git switch -c chore/next-thing      # start the next one from the fresh dev
+```
+
+- If `git switch` refuses ("your local changes would be overwritten"), put them aside first: `git stash` → do the flow → `git stash pop` on the new branch. `git stash list` shows what's stashed.
+- `git branch -d` (lowercase) is safe: it **refuses** if the branch has unmerged commits. `-D` (uppercase) forces the delete. Avoid it unless you're sure.
+- Also click **"Delete branch"** on the merged PR on GitHub; the next `git fetch --prune` then removes its `origin/` copy too.
 
 ### Small commits, named files
 
@@ -39,6 +66,14 @@ git commit -m "Feature: short summary" -m "- optional detail lines"
 git log --oneline -5
 git push -u origin feature/my-thing # first push of a new branch
 ```
+
+Checking before you commit. Any of these is fine; what matters is looking:
+
+| Command | Shows |
+|---|---|
+| `git status` | **which** files are staged ("Changes to be committed") and which aren't |
+| `git diff --staged --stat` | staged files **plus how many lines** each one changes. A surprise number = wrong file or editor reformatting |
+| `git diff --staged` | the actual staged **lines** |
 
 - `git diff <file>`: what changed in a file and isn't staged yet (red `-` = old lines). Handy to recover what a file looked like before your edits.
 - `git add -p <file>`: stage only *parts* of a file, hunk by hunk. Useful when one file contains two concerns.
@@ -136,7 +171,12 @@ Run from `backend/world-view`. Always `./mvnw` (project-pinned, checksum-verifie
 
 - `-Dtest` only filters which tests **run**. Maven still **compiles every** test file, so one broken test file blocks all of them.
 - Use `clean` when a result looks suspiciously good (e.g. "Nothing to compile" right after changing a constructor): VS Code compiles in the background and its class files can make Maven skip compiling.
-- `WorldViewApplicationTests` starts the real app: needs Docker up, and its scheduler polls NPR and sends real Kafka messages.
+- `WorldViewApplicationTests` starts the real app with the `test` profile: needs Postgres up (and `.env`, so use `./run_test.sh`), no Kafka.
+- Reading a test log: the thread name in `[...]` tells you who logged. `[main]` = the test itself (e.g. unit tests calling `checkForNewEntries()` with mocks); `[scheduling-1]` = the real `@Scheduled` scheduler. Background threads can log **after** a test finishes, so their lines show up in the terminal but not in `target/surefire-reports/`.
+
+```bash
+./run_test.sh 2>&1 | grep -E 'profile is active|scheduling-1'   # check the context test stays quiet
+```
 
 ## Reading test failures
 
