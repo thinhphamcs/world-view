@@ -53,3 +53,14 @@ Why things are the way they are. Newest at the bottom. Each entry: what was deci
 - **Decision:** don't add a `kafka` vs `direct` feature flag now.
 - **Why:** it's only needed if the cost review picks Hybrid or no-Kafka production (see [deployment.md](deployment.md)). Building it now means two code paths to test before there's any benefit (YAGNI). It stays cheap to add later, because only `RssEntryProducer` and `RssEntryConsumer` know about Kafka.
 - **Consequence:** when needed: a property like `world-view.messaging: kafka | direct` plus `@ConditionalOnProperty`. The rough refactor plan is in [deployment.md](deployment.md).
+
+## 7. Context test uses a `test` profile (no side effects)
+
+**Branch:** `chore/test-profile`
+
+- **Decision:** keep `WorldViewApplicationTests` (`contextLoads`) and run it with a `test` profile: scheduling off (`world-view.scheduling.enabled: false`, read by `@ConditionalOnProperty` on `SchedulingConfig`), Kafka listener `auto-startup: false`, and `ddl-auto: validate` against the dev Postgres.
+- **Why keep the test:** unit tests build classes by hand, so they never catch wiring bugs: a typo in a repository method name, a bad entity mapping, a bean Spring can't create, config that doesn't bind. Only starting the context does.
+- **Why the profile:** before, the test ran the real scheduler (polled NPR and sent 10 real Kafka messages), started the consumer, and could change the dev schema (`ddl-auto: update`). The side effects happened on background threads *after* the test passed, so they were easy to miss.
+- **Why dev Postgres + `validate`, not H2 or Testcontainers:** zero new dependencies, real Postgres. `validate` only reads the schema, and with the scheduler and listener off nothing writes. H2 is a fake Postgres (the entity uses `columnDefinition = "TEXT"`). Testcontainers is the better tool for real repository tests later, and can be decided then.
+- **Consequence:** the test needs Postgres up and `.env` (`./run_test.sh`), and the `rss_entry` table must exist, so on a fresh Docker volume run the backend once first. Kafka isn't needed. As a bonus, an entity change that the dev table doesn't have yet now fails the test instead of silently altering the table. Checked by breaking it on purpose: `enabled: true` brings back a `[scheduling-1]` fetch; renaming a column to `titlex` fails with `Schema validation: missing column`.
+

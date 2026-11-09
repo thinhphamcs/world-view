@@ -85,13 +85,14 @@ world-view/
 │       │   └── repository/RssEntryRepository.java  # JpaRepository<RssEntry, Long> + existsByLink
 │       ├── main/resources/application.yaml   # see docs/configuration.md
 │       └── test/
-│           ├── java/.../WorldViewApplicationTests.java   # contextLoads (needs live DB + Kafka)
+│           ├── java/.../WorldViewApplicationTests.java   # contextLoads, "test" profile (needs Postgres up)
 │           ├── java/.../dto/RssEntryDtoTest.java
 │           ├── java/.../mapper/RssEntryMapperTest.java
 │           ├── java/.../service/RssEntryConsumerTest.java
 │           ├── java/.../service/RssEntryProducerTest.java
 │           ├── java/.../service/RssFeedServiceTest.java
 │           ├── java/.../service/RssPollingSchedulerTest.java
+│           ├── resources/application-test.yaml           # test profile, see docs/configuration.md
 │           └── resources/sample-feed-only-2.xml          # 2-entry NPR fixture
 └── frontend/                  # bare `ng new` scaffold — no features yet
 ```
@@ -117,13 +118,13 @@ Prerequisites: Java 17, Docker Desktop (running), Node for the frontend. Maven i
    ./run_backend.sh
    ```
    On startup it polls NPR right away. Look for `Sent N entries to Kafka, skipped M incomplete` and `Processing new entry with link ...` in the log.
-4. Run the backend tests. Docker must be up for `contextLoads`.
+4. Run the backend tests. Postgres must be up for `contextLoads` (Kafka isn't needed).
    ```bash
    cd backend/world-view
    ./run_test.sh
    ./mvnw test -Dtest=RssEntryMapperTest    # a single test class (no Docker needed for unit tests)
    ```
-   Note: `contextLoads` starts the whole app, so its scheduler also fetches NPR and sends real messages to Kafka.
+   `contextLoads` runs with the `test` profile: no scheduler, no Kafka listener, and Hibernate only **validates** the schema. It needs the `rss_entry` table to exist, so on a fresh Docker volume run the backend once first. See [decision 7](docs/decisions.md#7-context-test-uses-a-test-profile-no-side-effects).
 5. Start the frontend:
    ```bash
    cd frontend
@@ -142,7 +143,7 @@ Rough order. Each item maps to one branch.
 3. ✅ **End-to-end check**: rows land in `rss_entry` (needed Kafka replication factor 1, see [decisions](docs/decisions.md#1-single-kafka-broker-internal-topic-replication-factor-1)). Still to observe: `already exists` logs on a repeat poll.
 4. ✅ **`feature/expand-entity`**: `title` + `summary` (`TEXT NOT NULL`, both required), HTML stripped with jsoup, incomplete entries skipped in scheduler and consumer. No images. See [decisions 2–5](docs/decisions.md).
    - ✅ **`chore/docs-split`**: cheatsheet; decisions, deployment and configuration moved to `docs/`.
-   - **Chore: test profile** for `WorldViewApplicationTests`, so the context test doesn't connect to dev Postgres, change the schema, or poll NPR and send real Kafka messages (confirmed it does today).
+   - ✅ **`chore/test-profile`**: `WorldViewApplicationTests` runs with a `test` profile: no scheduler, no Kafka listener, `ddl-auto: validate`. See [decision 7](docs/decisions.md#7-context-test-uses-a-test-profile-no-side-effects).
    - **Chore: JaCoCo coverage report** (`target/site/jacoco/index.html`). For finding untested code (red lines), not as a target number.
 5. **REST API**: e.g. `GET /api/entries?page=…&limit=…`, newest first, client-agnostic JSON.
 6. **Frontend**: news list page in Angular, text-first (headline, summary, source badge, time).
