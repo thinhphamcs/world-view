@@ -124,6 +124,7 @@ Prerequisites: Java 17, Docker Desktop (running), Node for the frontend. Maven i
    ./run_test.sh
    ./mvnw test -Dtest=RssEntryMapperTest    # a single test class (no Docker needed for unit tests)
    ```
+   Every test run also writes a coverage report: `open target/site/jacoco/index.html` (see [cheatsheet](docs/cheatsheet.md#coverage-report-jacoco)).
    `contextLoads` runs with the `test` profile: no scheduler, no Kafka listener, and Hibernate only **validates** the schema. It needs the `rss_entry` table to exist, so on a fresh Docker volume run the backend once first. See [decision 7](docs/decisions.md#7-context-test-uses-a-test-profile-no-side-effects).
 5. Start the frontend:
    ```bash
@@ -144,7 +145,7 @@ Rough order. Each item maps to one branch.
 4. ✅ **`feature/expand-entity`**: `title` + `summary` (`TEXT NOT NULL`, both required), HTML stripped with jsoup, incomplete entries skipped in scheduler and consumer. No images. See [decisions 2–5](docs/decisions.md).
    - ✅ **`chore/docs-split`**: cheatsheet; decisions, deployment and configuration moved to `docs/`.
    - ✅ **`chore/test-profile`**: `WorldViewApplicationTests` runs with a `test` profile: no scheduler, no Kafka listener, `ddl-auto: validate`. See [decision 7](docs/decisions.md#7-context-test-uses-a-test-profile-no-side-effects).
-   - **Chore: JaCoCo coverage report** (`target/site/jacoco/index.html`). For finding untested code (red lines), not as a target number.
+   - ✅ **`chore/jacoco`**: coverage report at `target/site/jacoco/index.html` after every test run. It found `RssFeedService.fetchLatestEntries` untested, which now has a test via a `file:` URL. See [decision 8](docs/decisions.md#8-jacoco-coverage-report-a-tool-not-a-target).
 5. **REST API**: e.g. `GET /api/entries?page=…&limit=…`, newest first, client-agnostic JSON.
 6. **Frontend**: news list page in Angular, text-first (headline, summary, source badge, time).
 7. **More sources**: more RSS feeds (make `NprFeedProperties` a list), then weather alerts, trending topics, audio/radio player. Possibly topic tags from `entry.getCategories()`.

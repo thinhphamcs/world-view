@@ -5,9 +5,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import com.rometools.rome.feed.synd.SyndEntry;
 import com.rometools.rome.feed.synd.SyndFeed;
 import com.rometools.rome.io.FeedException;
 
@@ -25,5 +27,20 @@ public class RssFeedServiceTest {
         assertNotNull(feed);
         assertEquals(2, feed.getEntries().size(), "Expected 2 entries in the feed");
         assertEquals("Senate Democrats say banks turned blind eye to suspicious moves by Jeffrey Epstein", feed.getEntries().get(0).getTitle(), "First entry title does match");
+    }
+
+    @Test
+    public void fetchLatestEntries_fileUrl_returnsAllEntries() throws IOException, FeedException {
+        // Arrange
+        NprFeedProperties file = new NprFeedProperties();
+        file.setUrl(getClass().getResource("/sample-feed-only-2.xml").toString());
+        RssFeedService rssFeedService = new RssFeedService(file);
+        // Act
+        List<SyndEntry> feed = rssFeedService.fetchLatestEntries();
+        // Assert
+        assertNotNull(feed);
+        assertEquals(2, feed.size());
+        assertEquals("Senate Democrats say banks turned blind eye to suspicious moves by Jeffrey Epstein", feed.get(0).getTitle());
+        assertEquals("5 states hold primaries today. And, Spokane police arrest man connected to wildfire", feed.get(1).getTitle());
     }
 }

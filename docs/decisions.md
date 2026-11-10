@@ -64,3 +64,11 @@ Why things are the way they are. Newest at the bottom. Each entry: what was deci
 - **Why dev Postgres + `validate`, not H2 or Testcontainers:** zero new dependencies, real Postgres. `validate` only reads the schema, and with the scheduler and listener off nothing writes. H2 is a fake Postgres (the entity uses `columnDefinition = "TEXT"`). Testcontainers is the better tool for real repository tests later, and can be decided then.
 - **Consequence:** the test needs Postgres up and `.env` (`./run_test.sh`), and the `rss_entry` table must exist, so on a fresh Docker volume run the backend once first. Kafka isn't needed. As a bonus, an entity change that the dev table doesn't have yet now fails the test instead of silently altering the table. Checked by breaking it on purpose: `enabled: true` brings back a `[scheduling-1]` fetch; renaming a column to `titlex` fails with `Schema validation: missing column`.
 
+## 8. JaCoCo coverage report: a tool, not a target
+
+**Branch:** `chore/jacoco`
+
+- **Decision:** add `jacoco-maven-plugin` (build plugin only, not in the app jar) with two executions: `prepare-agent` (attaches the recorder to the test JVM via Surefire's `argLine`) and `report` bound to the **`test`** phase, so `./mvnw test` writes `target/site/jacoco/index.html`. No minimum-coverage check (`jacoco:check`) that fails the build.
+- **Why:** the report is for **finding untested code** (red lines). A target number invites tests written to turn lines green rather than to check behaviour, and green only means "ran", not "asserted". `report` defaults to the `verify` phase, which `./mvnw test` never reaches, hence the explicit phase.
+- **Consequence:** the Spring Boot parent doesn't manage JaCoCo, so its version is pinned explicitly in `pom.xml` (verified on Maven Central). The first report found `RssFeedService.fetchLatestEntries` untested; it's now tested without the network by pointing `NprFeedProperties` at the fixture via a `file:` URL. Remaining red is deliberate: `main()`, `SchedulingConfig` (off in the test profile, decision 7), `RssEntry.getId()` (used once the REST API exists).
+
