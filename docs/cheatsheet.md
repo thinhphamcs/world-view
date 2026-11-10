@@ -179,6 +179,24 @@ Run from `backend/world-view`. Always `./mvnw` (project-pinned, checksum-verifie
 ./run_test.sh 2>&1 | grep -E 'profile is active|scheduling-1'   # check the context test stays quiet
 ```
 
+## Coverage report (JaCoCo)
+
+Every `./mvnw test` / `./run_test.sh` also writes a report (JaCoCo's `report` goal is bound to the `test` phase). No report if a test fails: Maven stops first.
+
+```bash
+open target/site/jacoco/index.html        # macOS: open in the browser
+```
+
+| Colour | Meaning |
+|---|---|
+| green | the line ran during some test |
+| yellow | only some branches of an `if` ran (hover the diamond for "1 of 2 branches missed") |
+| red | never ran: no test reaches it |
+
+- Use **red to find gaps**. Green only means the line *ran*, not that a test *checked* its result (`contextLoads` turns every constructor green without asserting anything).
+- Expected red, leave it: `WorldViewApplication.main()`, `SchedulingConfig` (off in the test profile).
+- `target/` is git-ignored, so the report is never committed.
+
 ## Reading test failures
 
 `expected: <A> but was: <B>`: **A** is what the test asserted, **B** is what the code returned. In `assertEquals(expected, actual)` the expected value always comes first.
