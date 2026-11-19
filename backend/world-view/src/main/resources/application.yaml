@@ -21,6 +21,10 @@ spring:
     producer:
       value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
 
+logging:
+  level:
+    org.hibernate.SQL: debug
+
 npr:
   feed:
     url: https://feeds.npr.org/1014/rss.xml

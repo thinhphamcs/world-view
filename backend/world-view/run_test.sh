@@ -2,4 +2,4 @@
 set -a
 source ../../.env
 set +a
-./mvnw test
+./mvnw test "$@"
