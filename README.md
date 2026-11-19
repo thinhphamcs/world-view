@@ -37,7 +37,10 @@ An ad-free, paywall-free news dashboard. RSS news, weather alerts, and trending 
  RssEntryRepository → Postgres table rss_entry                    ✅ done
       │
       ▼
- REST API → Angular dashboard                                     ❌ not started
+ NewsService → NewsController: GET /api/news (JSON, newest first) ✅ done
+      │
+      ▼
+ Angular dashboard                                                ❌ not started
 ```
 
 ## 4. Docs
@@ -66,7 +69,7 @@ world-view/
 │   ├── pom.xml
 │   ├── mvnw, .mvn/wrapper/    # Maven wrapper: downloads a pinned, checksum-verified Maven (no global install needed)
 │   ├── run_backend.sh         # loads ../../.env then `./mvnw spring-boot:run`
-│   ├── run_test.sh            # loads ../../.env then `./mvnw test`
+│   ├── run_test.sh            # loads ../../.env then `./mvnw test`; extra args are passed on (e.g. -Dtest=...)
 │   └── src/
 │       ├── main/java/net/thinhpham/world_view/
 │       │   ├── WorldViewApplication.java
@@ -74,20 +77,28 @@ world-view/
 │       │   │   ├── NprFeedProperties.java    # binds npr.feed.url
 │       │   │   └── SchedulingConfig.java     # @EnableScheduling
 │       │   ├── constant/KafkaTopics.java     # topic names shared by producer and consumer
+│       │   ├── controller/NewsController.java  # GET /api/news?page=&limit= (defaults 0/20, max 25, 400 on bad values)
 │       │   ├── mapper/RssEntryMapper.java    # SyndEntry → RssEntryDto (date fallback, HTML → plain text)
 │       │   ├── service/
 │       │   │   ├── RssFeedService.java       # fetch + parse feed with Rome
 │       │   │   ├── RssPollingScheduler.java  # @Scheduled every 15 min: fetch, map, skip incomplete, send
 │       │   │   ├── RssEntryProducer.java     # sends RssEntryDto to rss-entries, key = link
-│       │   │   └── RssEntryConsumer.java     # listens on rss-entries, skips incomplete/duplicate, saves new entries
-│       │   ├── dto/RssEntryDto.java          # record: link, title, summary, publishedAt, sourceName + isComplete()
+│       │   │   ├── RssEntryConsumer.java     # listens on rss-entries, skips incomplete/duplicate, saves new entries
+│       │   │   └── NewsService.java          # page of stories newest first → PageResponse<Story>
+│       │   ├── dto/
+│       │   │   ├── RssEntryDto.java          # Kafka message record: link, title, summary, publishedAt, sourceName + isComplete()
+│       │   │   ├── Story.java                # API record for one news item (id, title, summary, link, sourceName, publishedAt)
+│       │   │   └── PageResponse.java         # generic API page: items, page, size, totalElements, totalPages, hasNext
 │       │   ├── entity/RssEntry.java          # JPA entity, table rss_entry
-│       │   └── repository/RssEntryRepository.java  # JpaRepository<RssEntry, Long> + existsByLink
+│       │   └── repository/RssEntryRepository.java  # JpaRepository<RssEntry, Long> + existsByLink + newest-first paged query
 │       ├── main/resources/application.yaml   # see docs/configuration.md
 │       └── test/
 │           ├── java/.../WorldViewApplicationTests.java   # contextLoads, "test" profile (needs Postgres up)
+│           ├── java/.../controller/NewsControllerTest.java   # @WebMvcTest: JSON shape, defaults, 400s (no database)
 │           ├── java/.../dto/RssEntryDtoTest.java
 │           ├── java/.../mapper/RssEntryMapperTest.java
+│           ├── java/.../repository/RssEntryRepositoryTest.java  # @DataJpaTest on dev Postgres, rolled back (needs Postgres up)
+│           ├── java/.../service/NewsServiceTest.java
 │           ├── java/.../service/RssEntryConsumerTest.java
 │           ├── java/.../service/RssEntryProducerTest.java
 │           ├── java/.../service/RssFeedServiceTest.java
@@ -118,7 +129,7 @@ Prerequisites: Java 17, Docker Desktop (running), Node for the frontend. Maven i
    ./run_backend.sh
    ```
    On startup it polls NPR right away. Look for `Sent N entries to Kafka, skipped M incomplete` and `Processing new entry with link ...` in the log.
-4. Run the backend tests. Postgres must be up for `contextLoads` (Kafka isn't needed).
+4. Run the backend tests. Postgres must be up for `contextLoads` and `RssEntryRepositoryTest` (Kafka isn't needed).
    ```bash
    cd backend/world-view
    ./run_test.sh
@@ -146,7 +157,7 @@ Rough order. Each item maps to one branch.
    - ✅ **`chore/docs-split`**: cheatsheet; decisions, deployment and configuration moved to `docs/`.
    - ✅ **`chore/test-profile`**: `WorldViewApplicationTests` runs with a `test` profile: no scheduler, no Kafka listener, `ddl-auto: validate`. See [decision 7](docs/decisions.md#7-context-test-uses-a-test-profile-no-side-effects).
    - ✅ **`chore/jacoco`**: coverage report at `target/site/jacoco/index.html` after every test run. It found `RssFeedService.fetchLatestEntries` untested, which now has a test via a `file:` URL. See [decision 8](docs/decisions.md#8-jacoco-coverage-report-a-tool-not-a-target).
-5. **REST API**: e.g. `GET /api/entries?page=…&limit=…`, newest first, client-agnostic JSON.
+5. ✅ **`feature/rest-api`**: `GET /api/news?page=…&limit=…`, newest first, client-agnostic JSON. See [decision 9](docs/decisions.md#9-rest-api-get-apinews-own-response-records-limit-max-25).
 6. **Frontend**: news list page in Angular, text-first (headline, summary, source badge, time).
 7. **More sources**: more RSS feeds (make `NprFeedProperties` a list), then weather alerts, trending topics, audio/radio player. Possibly topic tags from `entry.getCategories()`.
 8. **Later: voice assistant client** that reads news briefings aloud (why summaries are plain text, see [decision 3](docs/decisions.md#3-client-agnostic-api-plain-text-summaries)).

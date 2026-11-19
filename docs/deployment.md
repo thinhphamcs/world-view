@@ -70,3 +70,5 @@ Unchanged: feed service, mapper, DTO, entity, repository, REST API, frontend.
 ## Later
 
 - **Retention rule:** delete stories older than N days (30/90) to cap storage. Old news isn't useful to the voice assistant anyway.
+- **Prod logging:** turn off the per-query SQL log in a prod profile (`logging.level.org.hibernate.SQL: info`). To debug, switch it on temporarily with the env var `LOGGING_LEVEL_ORG_HIBERNATE_SQL=DEBUG` and restart; no code change. Slow queries can be logged by Postgres itself (`log_min_duration_statement`).
+- **Rate limiting** for the public API (`/api/news`) at the proxy or Cloudflare, not in app code. See [decision 9](decisions.md#9-rest-api-get-apinews-own-response-records-limit-max-25).

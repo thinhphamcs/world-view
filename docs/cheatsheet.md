@@ -168,6 +168,7 @@ Run from `backend/world-view`. Always `./mvnw` (project-pinned, checksum-verifie
 ./mvnw test -Dtest='RssEntryDtoTest,RssPollingSchedulerTest'  # several
 ./mvnw clean test                         # wipe target/ first, then compile + test
 ./mvnw clean test-compile                 # just check that everything compiles
+./run_test.sh -Dtest=RssEntryRepositoryTest   # one class that needs Postgres + .env
 ```
 
 - `-Dtest` only filters which tests **run**. Maven still **compiles every** test file, so one broken test file blocks all of them.
@@ -178,6 +179,20 @@ Run from `backend/world-view`. Always `./mvnw` (project-pinned, checksum-verifie
 ```bash
 ./run_test.sh 2>&1 | grep -E 'profile is active|scheduling-1'   # check the context test stays quiet
 ```
+
+## Calling the API
+
+With the backend running (`./run_backend.sh`):
+
+```bash
+curl "http://localhost:8080/api/news"                    # page 0, 20 stories, newest first
+curl "http://localhost:8080/api/news?page=1&limit=5"     # second page of 5
+curl -i "http://localhost:8080/api/news?limit=30"        # -i shows the status line: 400 (max is 25)
+```
+
+- Quote the URL: an unquoted `&` makes the shell run the command in the background.
+- Pretty-print the JSON with `| python3 -m json.tool` (no extra install needed).
+- Rules and reasons: [decision 9](decisions.md#9-rest-api-get-apinews-own-response-records-limit-max-25).
 
 ## Coverage report (JaCoCo)
 
@@ -198,6 +213,8 @@ open target/site/jacoco/index.html        # macOS: open in the browser
 - `target/` is git-ignored, so the report is never committed.
 
 ## Reading test failures
+
+Failure details only appear when a test **fails**: look for `[ERROR] Failures:` in the `Results:` section near the bottom (or `target/surefire-reports/<TestClass>.txt`). A green run prints just `Tests run: N, Failures: 0`.
 
 `expected: <A> but was: <B>`: **A** is what the test asserted, **B** is what the code returned. In `assertEquals(expected, actual)` the expected value always comes first.
 

@@ -13,6 +13,7 @@ File: `backend/world-view/src/main/resources/application.yaml`. Database credent
 | `spring.json.value.default.type` | `net.thinhpham.world_view.dto.RssEntryDto` | fallback type for messages without a type header |
 | `spring.json.trusted.packages` | `net.thinhpham.world_view.dto` | only classes in this package may be deserialized |
 | `spring.kafka.producer.value-serializer` | `JacksonJsonSerializer` | turns `RssEntryDto` into JSON before sending |
+| `logging.level.org.hibernate.SQL` | `debug` | logs every SQL statement Hibernate runs (with `?` for values, so no data in logs). Uses the normal logger, unlike `spring.jpa.show-sql`. Turn off in prod; switch on there with the env var `LOGGING_LEVEL_ORG_HIBERNATE_SQL=DEBUG` (see [deployment.md](deployment.md#later)) |
 | `npr.feed.url` | `https://feeds.npr.org/1014/rss.xml` | NPR Politics feed |
 | `world-view.scheduling.enabled` | not set (= `true`) | read by `SchedulingConfig` (`@ConditionalOnProperty`, `matchIfMissing = true`). `false` turns off all `@Scheduled` jobs |
 
